@@ -20,6 +20,7 @@ meteor_img = pygame.image.load('assets/img/meteorBrown_med1.png').convert_alpha(
 meteor_img_small = pygame.transform.scale(meteor_img, (METEOR_WIDTH, METEOR_HEIGHT))
 
 # ----- Inicia estruturas de dados
+
 game = True
 # Sorteia posição aleatória
 # Como x é o lado esquerdo da imagem, ele só pode ir até a largura da
