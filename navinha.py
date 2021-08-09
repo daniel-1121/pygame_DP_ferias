@@ -9,31 +9,106 @@ pygame.init()
 WIDTH = 480
 HEIGHT = 600
 window = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption('Navinha')
+pygame.display.set_caption("Asteroides de DP")
 
 # ----- Inicia assets
 METEOR_WIDTH = 50
 METEOR_HEIGHT = 38
+SHIP_WIDTH = 50
+SHIP_HEIGHT = 38
 font = pygame.font.SysFont(None, 48)
 background = pygame.image.load('assets/img/starfield.png').convert()
 meteor_img = pygame.image.load('assets/img/meteorBrown_med1.png').convert_alpha()
-meteor_img_small = pygame.transform.scale(meteor_img, (METEOR_WIDTH, METEOR_HEIGHT))
+meteor_img = pygame.transform.scale(meteor_img, (METEOR_WIDTH, METEOR_HEIGHT))
+ship_img = pygame.image.load('assets/img/playerShip1_orange.png').convert_alpha()
+ship_img = pygame.transform.scale(ship_img, (SHIP_WIDTH, SHIP_HEIGHT))
 
 # ----- Inicia estruturas de dados
+# Definindo os novos tipos
+class Ship(pygame.sprite.Sprite):
+    def __init__(self, img):
+        # Construtor da classe mãe (Sprite).
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image = img
+        self.rect = self.image.get_rect()
+        self.rect.centerx = WIDTH / 2
+        self.rect.bottom = HEIGHT - 10
+        self.speedx = 0
+        self.speedy = 0
+
+    def update(self):
+        
+        self.speedx = 0
+        self.speedy = 0
+        
+        # Move a nave horizontalmente
+        keystate = pygame.key.get_pressed()
+        if keystate[pygame.K_LEFT]:
+            self.speedx = -8
+        if keystate[pygame.K_RIGHT]:
+            self.speedx = 8
+        
+        # Move a nave verticalmente
+        if keystate[pygame.K_UP]:
+            self.speedy = -8
+        if keystate[pygame.K_DOWN]:
+            self.speedy = 8
+        
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+
+
+        # Mantem dentro da tela
+        if self.rect.right > WIDTH:
+            self.rect.right = WIDTH
+        if self.rect.left < 0:
+            self.rect.left = 0
+        
+        if self.rect.top < 0:
+            self.rect.top = 0
+        if self.rect.bottom > HEIGHT:
+            self.rect.bottom = HEIGHT
+
+
+class Meteor(pygame.sprite.Sprite):
+    def __init__(self, img):
+        # Construtor da classe mãe (Sprite).
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image = img
+        self.rect = self.image.get_rect()
+        self.rect.x = random.randint(0, WIDTH-METEOR_WIDTH)
+        self.rect.y = random.randint(-100, -METEOR_HEIGHT)
+        self.speedx = random.randint(-3, 3)
+        self.speedy = random.randint(2, 9)
+
+    def update(self):
+        # Atualizando a posição do meteoro
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+        # Se o meteoro passar do final da tela, volta para cima e sorteia
+        # novas posições e velocidades
+        if self.rect.top > HEIGHT or self.rect.right < 0 or self.rect.left > WIDTH:
+            self.rect.x = random.randint(0, WIDTH-METEOR_WIDTH)
+            self.rect.y = random.randint(-100, -METEOR_HEIGHT)
+            self.speedx = random.randint(-3, 3)
+            self.speedy = random.randint(2, 9)
 
 game = True
-# Sorteia posição aleatória
-# Como x é o lado esquerdo da imagem, ele só pode ir até a largura da
-# janela menos a largura da imagem
-meteor_x = random.randint(0, WIDTH-METEOR_WIDTH)
-# y negativo significa que está acima do topo da janela. O meteoro começa fora da janela
-meteor_y = random.randint(-100, -METEOR_HEIGHT)
-# Sorteia velocidade do meteoro
-meteor_speedx = random.randint(-3, 3)
-meteor_speedy = random.randint(2, 9)
 # Variável para o ajuste de velocidade
 clock = pygame.time.Clock()
-FPS = 15
+FPS = 30
+
+# Criando um grupo de meteoros
+all_sprites = pygame.sprite.Group()
+# Criando o jogador
+player = Ship(ship_img)
+all_sprites.add(player)
+# Criando os meteoros
+for i in range(8):
+    meteor = Meteor(meteor_img)
+    all_sprites.add(meteor)
 
 # ===== Loop principal =====
 while game:
@@ -46,21 +121,15 @@ while game:
             game = False
 
     # ----- Atualiza estado do jogo
-    # Atualizando a posição do meteoro
-    meteor_x += meteor_speedx
-    meteor_y += meteor_speedy
-    # Se o meteoro passar do final da tela, volta para cima e sorteia
-    # novas posições e velocidades
-    if meteor_y > HEIGHT or meteor_x + METEOR_WIDTH < 0 or meteor_x > WIDTH:
-        meteor_x = random.randint(0, WIDTH-METEOR_WIDTH)
-        meteor_y = random.randint(-100, -METEOR_HEIGHT)
-        meteor_speedx = random.randint(-3, 3)
-        meteor_speedy = random.randint(2, 9)
+    # Atualizando a posição dos meteoros
+    all_sprites.update()
 
     # ----- Gera saídas
     window.fill((0, 0, 0))  # Preenche com a cor branca
     window.blit(background, (0, 0))
-    window.blit(meteor_img_small, (meteor_x, meteor_y))
+    # Desenhando meteoros
+    all_sprites.draw(window)
+
     pygame.display.update()  # Mostra o novo frame para o jogador
 
 # ===== Finalização =====
