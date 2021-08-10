@@ -54,9 +54,10 @@ class Ship(pygame.sprite.Sprite):
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
         self.speedx = 0
+        self.shield = 100
         self.groups = groups
         self.assets = assets
-
+        
         # Só será possível atirar uma vez a cada 500 milissegundos
         self.last_shot = pygame.time.get_ticks()
         self.shoot_ticks = 500
@@ -268,22 +269,10 @@ while state != DONE:
         if state == PLAYING:
             # Verifica se apertou alguma tecla.
             if event.type == pygame.KEYDOWN:
-                # Dependendo da tecla, altera a velocidade.
-                keys_down[event.key] = True
-                if event.key == pygame.K_LEFT:
-                    player.speedx -= 8
-                if event.key == pygame.K_RIGHT:
-                    player.speedx += 8
                 if event.key == pygame.K_SPACE:
                     player.shoot()
             # Verifica se soltou alguma tecla.
-            if event.type == pygame.KEYUP:
-                # Dependendo da tecla, altera a velocidade.
-                if event.key in keys_down and keys_down[event.key]:
-                    if event.key == pygame.K_LEFT:
-                        player.speedx += 8
-                    if event.key == pygame.K_RIGHT:
-                        player.speedx -= 8
+            
 
     # ----- Atualiza estado do jogo
     # Atualizando a posição dos meteoros
@@ -305,9 +294,14 @@ while state != DONE:
 
             # Ganhou pontos!
             score += 100
-            while lives != 3: #impõe limite maximo de tres vidas
-                if score % 1000 == 0:
+            if score % 1000 == 0:
                     lives += 1
+            if lives > 3:
+                lives = 3 #impõe limite maximo de tres vidas
+            if score % 5000 == 0:
+                m = Meteor(assets)
+                all_sprites.add(m)
+                all_meteors.add(m)
 
         # Verifica se houve colisão entre nave e meteoro
         hits = pygame.sprite.spritecollide(player, all_meteors, True, pygame.sprite.collide_mask)
