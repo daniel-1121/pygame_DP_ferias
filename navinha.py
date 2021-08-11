@@ -131,6 +131,7 @@ class Meteor(pygame.sprite.Sprite):
         # Construtor da classe mãe (Sprite).
         pygame.sprite.Sprite.__init__(self)
         self.lives = 2
+        self.dano = 2
         self.image_orig = assets['meteor_img']
         self.mask = pygame.mask.from_surface(self.image_orig)
         self.image = self.image_orig.copy()
@@ -176,6 +177,7 @@ class Big_meteor(pygame.sprite.Sprite):
         # Construtor da classe mãe (Sprite).
         pygame.sprite.Sprite.__init__(self)
         self.lives = 3
+        self.dano = 3
         self.image_orig = assets['big_meteor_img']
         self.mask = pygame.mask.from_surface(self.image_orig)
         self.image = self.image_orig.copy()
@@ -220,6 +222,7 @@ class Small_Meteor(pygame.sprite.Sprite):
         # Construtor da classe mãe (Sprite).
         pygame.sprite.Sprite.__init__(self)
         self.lives = 1
+        self.dano = 1
         self.image_orig = assets['small_meteor_img']
         self.mask = pygame.mask.from_surface(self.image_orig)
         self.image = self.image_orig.copy()
@@ -348,7 +351,7 @@ groups['all_bullets'] = all_bullets
 player = Ship(groups, assets)
 all_sprites.add(player)
 # Criando os meteoros
-for i in range(6):
+for i in range(4):
     meteor = Meteor(assets)
     all_sprites.add(meteor)
     all_meteors.add(meteor)
@@ -361,7 +364,7 @@ state = PLAYING
 
 keys_down = {}
 score = 0
-lives = 3
+lives = 5
 
 
 # ===== Loop principal =====
@@ -406,12 +409,12 @@ while state != DONE and state != GAMEOVER:
 
             # Ganhou pontos!
                 score += 100
-                if score % 3000 == 0:
+                if score % 2000 == 0:
                     lives += 1
             
             # Impõe limite maximo de tres vidas
-                if lives > 3:
-                    lives = 3 
+                if lives > 5:
+                    lives = 5 
             
             # Adiciona um novo meteoro a cada 5000 pontos 
                 if score % 5000 == 0:
@@ -424,7 +427,7 @@ while state != DONE and state != GAMEOVER:
                     all_sprites.add(bm)
                     all_meteors.add(bm)
                 
-                if score % 600 == 0:
+                if score % 200 == 0:
                     sm = Small_Meteor(assets)
                     all_sprites.add(sm)
                     all_meteors.add(sm)
@@ -437,7 +440,7 @@ while state != DONE and state != GAMEOVER:
             all_sprites.add(m)
             all_meteors.add(m)
             player.kill()
-            lives -= 1
+            lives -= meteor.dano
             explosao = Explosion(player.rect.center, assets)
             all_sprites.add(explosao)
             state = EXPLODING
@@ -447,8 +450,8 @@ while state != DONE and state != GAMEOVER:
     elif state == EXPLODING:
         now = pygame.time.get_ticks()
         if now - explosion_tick > explosion_duration:
-            if lives == 0:
-                state = GAMEOVER
+            if lives <= 0:
+                state = DONE
             else:
                 state = PLAYING
                 player = Ship(groups, assets)
