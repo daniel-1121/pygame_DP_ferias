@@ -15,8 +15,11 @@ pygame.display.set_caption('Navinha')
 # ----- Inicia assets
 METEOR_WIDTH = 50
 METEOR_HEIGHT = 38
-BIG_METEOR_HEIGHT = 125
-BIG_METEOR_WIDTH  = 95
+BIG_METEOR_HEIGHT = 115
+BIG_METEOR_WIDTH  = 80
+SMALL_METEOR_WIDTH = 25
+SMALL_METEOR_HEIGHT = 20
+
 SHIP_WIDTH = 50
 SHIP_HEIGHT = 38
 assets = {}
@@ -25,6 +28,8 @@ assets['meteor_img'] = pygame.image.load('assets/img/meteorBrown_med1.png').conv
 assets['meteor_img'] = pygame.transform.scale(assets['meteor_img'], (METEOR_WIDTH, METEOR_HEIGHT))
 assets['big_meteor_img'] = pygame.image.load('assets/img/meteorBrown_big2.png').convert_alpha()
 assets['big_meteor_img'] = pygame.transform.scale(assets['big_meteor_img'], (BIG_METEOR_WIDTH ,BIG_METEOR_HEIGHT))
+assets['small_meteor_img'] = pygame.image.load('assets/img/meteorBrown_small1.png').convert_alpha()
+assets['small_meteor_img'] = pygame.transform.scale(assets['small_meteor_img'], (SMALL_METEOR_WIDTH ,SMALL_METEOR_HEIGHT))
 assets['ship_img'] = pygame.image.load('assets/img/playerShip1_orange.png').convert_alpha()
 assets['ship_img'] = pygame.transform.scale(assets['ship_img'], (SHIP_WIDTH, SHIP_HEIGHT))
 assets['bullet_img'] = pygame.image.load('assets/img/laserRed16.png').convert_alpha()
@@ -67,7 +72,7 @@ class Ship(pygame.sprite.Sprite):
         
         # Só será possível atirar uma vez a cada 500 milissegundos
         self.last_shot = pygame.time.get_ticks()
-        self.shoot_ticks = 500
+        self.shoot_ticks = 300
 
     def update(self):
         # Atualização da posição da nave
@@ -125,7 +130,7 @@ class Meteor(pygame.sprite.Sprite):
     def __init__(self, assets):
         # Construtor da classe mãe (Sprite).
         pygame.sprite.Sprite.__init__(self)
-        self.lives = 1
+        self.lives = 2
         self.image_orig = assets['meteor_img']
         self.mask = pygame.mask.from_surface(self.image_orig)
         self.image = self.image_orig.copy()
@@ -165,28 +170,6 @@ class Meteor(pygame.sprite.Sprite):
             self.speedy = random.randint(2, 9)
 
 # Classe Bullet que representa os tiros
-class Bullet(pygame.sprite.Sprite):
-    # Construtor da classe.
-    def __init__(self, assets, bottom, centerx):
-        # Construtor da classe mãe (Sprite).
-        pygame.sprite.Sprite.__init__(self)
-
-        self.image = assets['bullet_img']
-        self.mask = pygame.mask.from_surface(self.image)
-        self.rect = self.image.get_rect()
-
-        # Coloca no lugar inicial definido em x, y do constutor
-        self.rect.centerx = centerx
-        self.rect.bottom = bottom
-        self.speedy = -10  # Velocidade fixa para cima
-
-    def update(self):
-        # A bala só se move no eixo y
-        self.rect.y += self.speedy
-
-        # Se o tiro passar do inicio da tela, morre.
-        if self.rect.bottom < 0:
-            self.kill()
 
 class Big_meteor(pygame.sprite.Sprite):
     def __init__(self, assets):
@@ -232,7 +215,71 @@ class Big_meteor(pygame.sprite.Sprite):
             self.speedx = random.randint(-3, 3)
             self.speedy = random.randint(2, 9)
 
+class Small_Meteor(pygame.sprite.Sprite):
+    def __init__(self, assets):
+        # Construtor da classe mãe (Sprite).
+        pygame.sprite.Sprite.__init__(self)
+        self.lives = 1
+        self.image_orig = assets['small_meteor_img']
+        self.mask = pygame.mask.from_surface(self.image_orig)
+        self.image = self.image_orig.copy()
+        self.rect = self.image.get_rect()
+        self.radius = int(self.rect.width * .9 /2)
+        #pygame.draw.circle(self.image_orig,(255,0,0),self.rect.center,self.radius)
+        self.rect.x = random.randint(0, WIDTH-SMALL_METEOR_WIDTH)
+        self.rect.y = random.randint(-100, -SMALL_METEOR_HEIGHT)
+        self.speedx = random.randint(-3, 3)
+        self.speedy = random.randint(2, 9)
+        self.rot = 0
+        self.rot_speed = random.randrange(-8,8)
+        self.last_update = pygame.time.get_ticks()
+    
+    def rotate(self):
+        now = pygame.time.get_ticks()
+        if now - self.last_update > 50:
+            self.last_update = now
+            self.rot = (self.rot + self.rot_speed) % 360
+            new_image = pygame.transform.rotate(self.image_orig, self.rot)
+            old_center = self.rect.center
+            self.image = new_image
+            self.rect = self.image.get_rect()
+            self.rect.center = old_center
+    
+    def update(self):
+        # Atualizando a posição do meteoro
+        self.rotate()
+        self.rect.x += self.speedx
+        self.rect.y += self.speedy
+        # Se o meteoro passar do final da tela, volta para cima e sorteia
+        # novas posições e velocidades
+        if self.rect.top > HEIGHT or self.rect.right < 0 or self.rect.left > WIDTH:
+            self.rect.x = random.randint(0, WIDTH-SMALL_METEOR_WIDTH)
+            self.rect.y = random.randint(-100, - SMALL_METEOR_HEIGHT)
+            self.speedx = random.randint(-3, 3)
+            self.speedy = random.randint(2, 9)
    
+class Bullet(pygame.sprite.Sprite):
+    # Construtor da classe.
+    def __init__(self, assets, bottom, centerx):
+        # Construtor da classe mãe (Sprite).
+        pygame.sprite.Sprite.__init__(self)
+
+        self.image = assets['bullet_img']
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect = self.image.get_rect()
+
+        # Coloca no lugar inicial definido em x, y do constutor
+        self.rect.centerx = centerx
+        self.rect.bottom = bottom
+        self.speedy = -10  # Velocidade fixa para cima
+
+    def update(self):
+        # A bala só se move no eixo y
+        self.rect.y += self.speedy
+
+        # Se o tiro passar do inicio da tela, morre.
+        if self.rect.bottom < 0:
+            self.kill()
 
 
 # Classe que representa uma explosão de meteoro
@@ -301,7 +348,7 @@ groups['all_bullets'] = all_bullets
 player = Ship(groups, assets)
 all_sprites.add(player)
 # Criando os meteoros
-for i in range(8):
+for i in range(6):
     meteor = Meteor(assets)
     all_sprites.add(meteor)
     all_meteors.add(meteor)
@@ -315,7 +362,7 @@ state = PLAYING
 keys_down = {}
 score = 0
 lives = 3
-big_meteor_lives = 3
+
 
 # ===== Loop principal =====
 pygame.mixer.music.play(loops=-1)
@@ -376,7 +423,11 @@ while state != DONE and state != GAMEOVER:
                     bm = Big_meteor(assets)
                     all_sprites.add(bm)
                     all_meteors.add(bm)
-
+                
+                if score % 300 == 0:
+                    sm = Small_Meteor(assets)
+                    all_sprites.add(sm)
+                    all_meteors.add(sm)
         # Verifica se houve colisão entre nave e meteoro
         hits = pygame.sprite.spritecollide(player, all_meteors, True, pygame.sprite.collide_mask)
         if len(hits) > 0:
