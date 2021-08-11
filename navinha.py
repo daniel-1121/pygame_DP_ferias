@@ -142,7 +142,7 @@ class Meteor(pygame.sprite.Sprite):
         self.speedx = random.randint(-3, 3)
         self.speedy = random.randint(2, 9)
         self.rot = 0
-        self.rot_speed = random.randrange(-8,8)
+        self.rot_speed = random.randrange(-13,13)
         self.last_update = pygame.time.get_ticks()
     
     def rotate(self):
@@ -229,9 +229,9 @@ class Small_Meteor(pygame.sprite.Sprite):
         self.rect.x = random.randint(0, WIDTH-SMALL_METEOR_WIDTH)
         self.rect.y = random.randint(-100, -SMALL_METEOR_HEIGHT)
         self.speedx = random.randint(-3, 3)
-        self.speedy = random.randint(2, 9)
+        self.speedy = random.randint(5, 13)
         self.rot = 0
-        self.rot_speed = random.randrange(-8,8)
+        self.rot_speed = random.randrange(-13,13)
         self.last_update = pygame.time.get_ticks()
     
     def rotate(self):
@@ -419,12 +419,12 @@ while state != DONE and state != GAMEOVER:
                     all_sprites.add(m)
                     all_meteors.add(m)
 
-                if score % 500 == 0:
+                if score % 900 == 0:
                     bm = Big_meteor(assets)
                     all_sprites.add(bm)
                     all_meteors.add(bm)
                 
-                if score % 300 == 0:
+                if score % 600 == 0:
                     sm = Small_Meteor(assets)
                     all_sprites.add(sm)
                     all_meteors.add(sm)
